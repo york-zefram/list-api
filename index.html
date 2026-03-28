@@ -8,24 +8,30 @@
         :root { --pink: #ff007f; --black: #050505; --gray: #1a1a1a; --green: #00ff88; }
         
         html, body { height: 100%; margin: 0; background: var(--black); color: white; font-family: sans-serif; overflow: hidden; }
-        .main-container { display: flex; flex-direction: column; height: 100vh; }
+        .main-container { display: flex; flex-direction: column; height: 100vh; position: relative; }
 
         #video-container { width: 100%; aspect-ratio: 16 / 9; max-height: 35vh; background: #000; flex-shrink: 0; border-bottom: 1px solid #333; }
         #player { width: 100%; height: 100%; }
 
-        /* 検索バーと「選 曲」ボタンのレイアウト */
+        /* 検索バー周り */
         .search-bar { padding: 10px 15px; background: var(--black); flex-shrink: 0; border-bottom: 1px solid #222; display: flex; gap: 10px; align-items: flex-start; }
-        .input-group { flex-grow: 1; }
+        
+        /* 🔑マークと入力グループ */
+        .input-group { flex-grow: 1; display: flex; align-items: center; gap: 8px; }
+        #key-trigger { 
+            cursor: pointer; font-size: 1.2rem; transition: 0.3s; filter: grayscale(1); opacity: 0.5;
+        }
+        #key-trigger.active { filter: grayscale(0); opacity: 1; text-shadow: 0 0 10px var(--green); }
+
         #search-input { 
             background: var(--gray); border: 1px solid #333; border-radius: 4px;
             font-size: 1.1rem; color: white; width: 100%; padding: 10px; outline: none; box-sizing: border-box;
         }
         
-        /* 選 曲 ボタン */
         #search-btn {
             background: transparent; color: var(--pink); border: 1px solid var(--pink);
             padding: 10px 15px; border-radius: 4px; font-size: 0.9rem; font-weight: bold;
-            cursor: pointer; white-space: nowrap; height: 44px; /* inputの高さに合わせる */
+            cursor: pointer; white-space: nowrap; height: 44px;
         }
 
         #status { font-size: 0.6rem; color: #666; margin-top: 5px; text-transform: uppercase; letter-spacing: 1px; }
@@ -33,8 +39,27 @@
 
         #lst { flex-grow: 1; overflow-y: auto; padding: 0 15px 50px 15px; -webkit-overflow-scrolling: touch; }
 
+        /* セットアップ用モーダル（get-apiの移植） */
+        #setup-overlay {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 1000;
+            display: none; justify-content: center; align-items: center;
+        }
+        .z-panel {
+            width: 90%; max-width: 400px; padding: 40px 20px; border: 1px solid var(--pink);
+            background: var(--black); text-align: center; box-shadow: 0 0 30px rgba(255, 0, 127, 0.2);
+        }
+        .z-btn {
+            background: transparent; color: var(--pink); border: 1px solid var(--pink);
+            padding: 15px; width: 100%; font-weight: bold; cursor: pointer; font-size: 0.8rem; margin-bottom: 20px;
+        }
+        .setup-input {
+            width: 100%; padding: 12px; background: #000; border: 1px solid #333;
+            color: var(--green); font-family: monospace; text-align: center; outline: none; box-sizing: border-box;
+        }
+        .close-btn { color: #666; font-size: 0.7rem; margin-top: 20px; cursor: pointer; text-decoration: underline; }
+
+        /* リスト項目など */
         .section-label { font-size: 0.7rem; color: var(--pink); font-weight: bold; margin: 20px 0 10px; border-left: 3px solid var(--pink); padding-left: 8px; letter-spacing: 2px; }
-        
         .row { display: flex; align-items: center; padding: 10px 0; border-bottom: 1px solid #111; cursor: pointer; }
         .type-tag { width: 45px; font-size: 0.55rem; padding: 2px 0; background: #333; color: #aaa; border-radius: 2px; flex-shrink: 0; text-align: center; margin-right: 10px; }
         .thumb-box { width: 50px; height: 50px; flex-shrink: 0; margin-right: 12px; overflow: hidden; border-radius: 2px; background: #222; }
@@ -49,10 +74,13 @@
         <div id="video-container"><div id="player"></div></div>
         
         <div class="search-bar">
+            <div id="key-trigger" onclick="toggleSetup()">🔑</div>
             <div class="input-group">
-                <input type="text" id="search-input" placeholder="SEARCH..." onkeydown="if(event.key==='Enter') doSearch()">
-                <div id="status">CORE ACTIVE</div>
-                <div id="back-btn" onclick="restoreLastSearch()">← BACK</div>
+                <div style="width: 100%;">
+                    <input type="text" id="search-input" placeholder="SEARCH..." onkeydown="if(event.key==='Enter') doSearch()">
+                    <div id="status">AWAITING CORE...</div>
+                    <div id="back-btn" onclick="restoreLastSearch()">← BACK</div>
+                </div>
             </div>
             <button id="search-btn" onclick="doSearch()">選 曲</button>
         </div>
@@ -60,16 +88,73 @@
         <div id="lst"></div>
     </div>
 
+    <div id="setup-overlay">
+        <div class="z-panel">
+            <div style="font-size: 1.2rem; color: var(--pink); letter-spacing: 4px; margin-bottom: 5px;">ZEFRAM</div>
+            <div style="font-size: 0.6rem; color: #666; margin-bottom: 30px;">CORE SETUP</div>
+            
+            <button class="z-btn" onclick="openGoogle()">OPEN GOOGLE TERMINAL</button>
+            <input type="text" id="api-key-input" class="setup-input" placeholder="PASTE CORE KEY" oninput="checkKey()">
+            <div id="setup-status" style="font-size: 0.6rem; margin-top: 10px; height: 1rem;"></div>
+            
+            <div class="close-btn" onclick="toggleSetup()">CLOSE TERMINAL</div>
+        </div>
+    </div>
+
     <script src="https://www.youtube.com/iframe_api"></script>
     <script>
-        // 【重要】LocalStorageから鍵を読み込む
-        const API_KEY = localStorage.getItem('ZEFRAM_API_KEY'); 
+        let API_KEY = localStorage.getItem('ZEFRAM_API_KEY');
+        let player, lastResultsHTML = "";
 
-        if (!API_KEY) {
-            document.getElementById('status').innerHTML = "<span style='color:var(--pink)'>API KEY MISSING. RUN SETUP.</span>";
+        // 初期状態の反映
+        window.addEventListener('DOMContentLoaded', () => {
+            updateKeyStatus();
+        });
+
+        function updateKeyStatus() {
+            const trigger = document.getElementById('key-trigger');
+            const status = document.getElementById('status');
+            if (API_KEY) {
+                trigger.classList.add('active');
+                status.innerText = "CORE ACTIVE";
+            } else {
+                trigger.classList.remove('active');
+                status.innerHTML = "<span style='color:var(--pink)'>🔑 KEY REQUIRED</span>";
+            }
         }
 
-        let player, lastResultsHTML = "";
+        function toggleSetup() {
+            const overlay = document.getElementById('setup-overlay');
+            overlay.style.display = (overlay.style.display === 'flex') ? 'none' : 'flex';
+        }
+
+        function openGoogle() {
+            const w = 700; const h = 800;
+            const left = (window.screen.width / 2) - (w / 2);
+            const top = (window.screen.height / 2) - (h / 2);
+            window.open('https://console.cloud.google.com/apis/credentials', 'z_terminal', 
+                `width=${w},height=${h},left=${left},top=${top},menubar=no,toolbar=no,location=no,status=no`);
+        }
+
+        async function checkKey() {
+            const val = document.getElementById('api-key-input').value.trim();
+            const sStatus = document.getElementById('setup-status');
+            if (val.length < 30) return;
+
+            try {
+                const url = `https://www.googleapis.com/youtube/v3/videoCategories?part=snippet&regionCode=JP&key=${val}`;
+                const res = await fetch(url);
+                if (res.ok) {
+                    localStorage.setItem('ZEFRAM_API_KEY', val);
+                    API_KEY = val;
+                    sStatus.innerHTML = "<span style='color:var(--green)'>CORE ACTIVATED</span>";
+                    updateKeyStatus();
+                    setTimeout(toggleSetup, 1000); // 1秒後に自動で閉じる
+                } else {
+                    sStatus.innerHTML = "<span style='color:var(--pink)'>INVALID KEY</span>";
+                }
+            } catch (e) { sStatus.innerText = "CONN ERROR"; }
+        }
 
         function onYouTubeIframeAPIReady() {
             player = new YT.Player('player', {
@@ -80,7 +165,7 @@
 
         async function doSearch() {
             if (!API_KEY) {
-                alert("セットアップツールでAPIキーを設定してください。");
+                toggleSetup();
                 return;
             }
             const q = document.getElementById('search-input').value;
@@ -92,7 +177,6 @@
                 const url = `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(q + " Topic")}&maxResults=50&key=${API_KEY}`;
                 const res = await fetch(url);
                 const data = await res.json();
-
                 if (data.error) throw new Error(data.error.message);
 
                 const videoIds = data.items.filter(i => i.id.kind === 'youtube#video').map(i => i.id.videoId).join(',');
@@ -107,12 +191,10 @@
                 lastResultsHTML = document.getElementById('lst').innerHTML;
                 document.getElementById('lst').scrollTop = 0;
                 document.getElementById('status').innerText = "DONE";
-            } catch (e) { 
-                document.getElementById('status').innerText = "ERROR: " + e.message; 
-            }
+            } catch (e) { document.getElementById('status').innerText = "ERROR: " + e.message; }
         }
 
-        // --- 以下、描画・ユーティリティ関数（変更なし） ---
+        // --- 描画・ユーティリティ ---
         function renderList(items, durationMap) {
             const lst = document.getElementById('lst');
             let html = "";
