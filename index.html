@@ -11,18 +11,22 @@
         
         /* 上段: ビデオ */
         #video-container { width: 100%; aspect-ratio: 16 / 9; max-height: 35vh; background: #000; flex-shrink: 0; border-bottom: 1px solid #333; }
-        #player { width: 100%; height: 100%; }
+        #player { width: 100%; height: 100%; pointer-events: none; }
 
-        /* 追加: 再生ボタン・シークバーエリア */
-        .player-controls { display: flex; align-items: center; padding: 15px; background: var(--black); gap: 20px; flex-shrink: 0; }
-        #play-pause-btn { font-size: 1.8rem; color: var(--blue); cursor: pointer; user-select: none; width: 40px; text-align: center; }
+        /* 再生エリア: 高さを広げ、垂直センター配置 */
+        .player-controls { display: flex; align-items: center; height: 80px; padding: 0 20px; background: var(--black); gap: 20px; flex-shrink: 0; }
+        #play-pause-btn { font-size: 2rem; color: var(--blue); cursor: pointer; user-select: none; width: 45px; text-align: center; }
         
-        .seek-container { flex-grow: 1; display: flex; flex-direction: column; gap: 8px; }
-        .seek-bar-wrapper { position: relative; width: 100%; height: 6px; background: #333; border-radius: 3px; cursor: pointer; overflow: visible; }
-        #seek-fill { position: absolute; left: 0; top: 0; height: 100%; background: rgba(0, 243, 255, 0.4); border-radius: 3px; pointer-events: none; }
-        #seek-dot { position: absolute; top: 50%; width: 8px; height: 8px; background: #fff; border-radius: 50%; transform: translate(-50%, -50%); pointer-events: none; box-shadow: 0 0 5px rgba(255,255,255,0.8); }
+        .seek-container { flex-grow: 1; display: flex; flex-direction: column; justify-content: center; gap: 10px; height: 100%; }
         
-        .time-display { display: flex; justify-content: space-between; font-family: monospace; font-size: 0.75rem; color: var(--blue); letter-spacing: 1px; }
+        /* 再生バー: 太さを10pxに、操作範囲を拡大 */
+        .seek-bar-wrapper { position: relative; width: 100%; height: 10px; background: #333; border-radius: 5px; cursor: pointer; touch-action: none; }
+        #seek-fill { position: absolute; left: 0; top: 0; height: 100%; background: rgba(0, 243, 255, 0.5); border-radius: 5px; pointer-events: none; }
+        
+        /* 白丸: サイズを大きくし、中心に配置 */
+        #seek-dot { position: absolute; top: 50%; width: 16px; height: 16px; background: #fff; border-radius: 50%; transform: translate(-50%, -50%); pointer-events: none; box-shadow: 0 0 10px rgba(255,255,255,0.8); }
+        
+        .time-display { display: flex; justify-content: space-between; font-family: monospace; font-size: 0.8rem; color: var(--blue); letter-spacing: 1px; }
 
         /* 中段: 検索枠 */
         .search-bar { padding: 5px 15px 15px 15px; background: var(--black); flex-shrink: 0; border-bottom: 1px solid #222; display: flex; gap: 8px; align-items: center; }
@@ -36,7 +40,6 @@
         .input-wrapper { flex-grow: 1; position: relative; }
         #search-input { background: var(--gray); border: 1px solid #333; border-radius: 4px; font-size: 1rem; color: white; width: 100%; padding: 10px; outline: none; box-sizing: border-box; }
         #search-btn { background: transparent; color: var(--blue); border: 1px solid var(--blue); padding: 0 12px; border-radius: 4px; font-size: 0.8rem; font-weight: bold; cursor: pointer; height: 40px; line-height: 40px; flex-shrink: 0; }
-
         #status { position: absolute; left: 15px; top: 100%; font-size: 0.55rem; color: #555; margin-top: 8px; letter-spacing: 1px; }
 
         /* 下段: リスト */
@@ -45,7 +48,7 @@
 
         #setup-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 1000; display: none; justify-content: center; align-items: center; }
         .z-panel { width: 85%; max-width: 360px; padding: 40px 20px; border: 1px solid var(--blue); background: var(--black); text-align: center; }
-        .z-btn { background: transparent; color: var(--blue); border: 1px solid var(--blue); padding: 15px; width: 100%; font-weight: bold; cursor: pointer; font-size: 0.75rem; margin-bottom: 20px; }
+        .z-btn { background: transparent; color: var(--blue); border: 1px solid var(--blue); padding: 15 tax; width: 100%; font-weight: bold; cursor: pointer; font-size: 0.75rem; margin-bottom: 20px; }
         .setup-input { width: 100%; padding: 12px; background: #000; border: 1px solid #333; color: var(--green); font-family: monospace; text-align: center; outline: none; box-sizing: border-box; }
 
         .section-label { font-size: 0.65rem; color: var(--blue); font-weight: bold; margin: 15px 0 10px; border-left: 2px solid var(--blue); padding-left: 8px; letter-spacing: 2px; }
@@ -65,7 +68,7 @@
         <div class="player-controls">
             <div id="play-pause-btn" onclick="togglePlay()">II</div>
             <div class="seek-container">
-                <div class="seek-bar-wrapper" id="seek-bar" onclick="seek(event)">
+                <div class="seek-bar-wrapper" id="seek-bar">
                     <div id="seek-fill"></div>
                     <div id="seek-dot"></div>
                 </div>
@@ -106,9 +109,12 @@
         let API_KEY = localStorage.getItem('ZEFRAM_API_KEY');
         let currentMode = 'practice';
         let player, lastResultsHTML = "";
-        let timer;
+        let timer, isDragging = false;
 
-        window.addEventListener('DOMContentLoaded', updateKeyStatus);
+        window.addEventListener('DOMContentLoaded', () => {
+            updateKeyStatus();
+            initSeekBar();
+        });
 
         function setMode(m) {
             currentMode = m;
@@ -144,7 +150,7 @@
         function onYouTubeIframeAPIReady() {
             player = new YT.Player('player', {
                 height: '100%', width: '100%', videoId: '',
-                playerVars: { 'playsinline': 1, 'controls': 0, 'rel': 0, 'modestbranding': 1 },
+                playerVars: { 'playsinline': 1, 'controls': 0, 'rel': 0, 'modestbranding': 1, 'showinfo': 0, 'iv_load_policy': 3 },
                 events: { 'onStateChange': onPlayerStateChange }
             });
         }
@@ -160,38 +166,61 @@
         }
 
         function togglePlay() {
-            if (!player) return;
+            if (!player || !player.getPlayerState) return;
             const state = player.getPlayerState();
             if (state == YT.PlayerState.PLAYING) player.pauseVideo();
             else player.playVideo();
         }
 
-        function startTimer() {
-            stopTimer();
-            timer = setInterval(updateUI, 500);
-        }
-
+        function startTimer() { stopTimer(); timer = setInterval(updateUI, 300); }
         function stopTimer() { clearInterval(timer); }
 
         function updateUI() {
-            if (!player || !player.getCurrentTime) return;
+            if (!player || !player.getCurrentTime || isDragging) return;
             const cur = player.getCurrentTime();
             const dur = player.getDuration();
-            const perc = (cur / dur) * 100;
-            document.getElementById('seek-fill').style.width = perc + "%";
-            document.getElementById('seek-dot').style.left = perc + "%";
+            updateBar(cur / dur);
             document.getElementById('current-time').innerText = formatTime(cur);
             document.getElementById('total-time').innerText = formatTime(dur);
         }
 
-        function seek(e) {
-            if (!player || !player.getDuration) return;
-            const rect = document.getElementById('seek-bar').getBoundingClientRect();
-            const pos = (e.clientX - rect.left) / rect.width;
-            player.seekTo(pos * player.getDuration());
+        function updateBar(perc) {
+            const p = Math.max(0, Math.min(1, perc)) * 100;
+            document.getElementById('seek-fill').style.width = p + "%";
+            document.getElementById('seek-dot').style.left = p + "%";
+        }
+
+        // ヌルヌルスライド（ドラッグ）実装
+        function initSeekBar() {
+            const bar = document.getElementById('seek-bar');
+            const handleMove = (e) => {
+                if (!isDragging || !player || !player.getDuration) return;
+                const rect = bar.getBoundingClientRect();
+                const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+                const pos = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
+                updateBar(pos);
+                document.getElementById('current-time').innerText = formatTime(pos * player.getDuration());
+            };
+
+            const handleEnd = (e) => {
+                if (!isDragging) return;
+                isDragging = false;
+                const rect = bar.getBoundingClientRect();
+                const clientX = e.changedTouches ? e.changedTouches[0].clientX : e.clientX;
+                const pos = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
+                player.seekTo(pos * player.getDuration());
+            };
+
+            bar.addEventListener('mousedown', (e) => { isDragging = true; handleMove(e); });
+            bar.addEventListener('touchstart', (e) => { isDragging = true; handleMove(e); }, {passive: false});
+            window.addEventListener('mousemove', handleMove);
+            window.addEventListener('touchmove', handleMove, {passive: false});
+            window.addEventListener('mouseup', handleEnd);
+            window.addEventListener('touchend', handleEnd);
         }
 
         function formatTime(s) {
+            if (!s || isNaN(s)) return "00:00";
             const m = Math.floor(s / 60);
             const rs = Math.floor(s % 60);
             return m.toString().padStart(2, '0') + ":" + rs.toString().padStart(2, '0');
@@ -201,19 +230,15 @@
             if (!API_KEY) return toggleSetup();
             const q = document.getElementById('search-input').value;
             if (!q) return;
-
             document.getElementById('status').innerText = "SEARCHING...";
-
             let suffix = "";
             if(currentMode === 'music') suffix = " - Topic";
             else if(currentMode === 'movie') suffix = " Official MV";
             else if(currentMode === 'practice') suffix = " Official Dance Practice -Mirror"; 
-            
             try {
                 const url = `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(q + suffix)}&maxResults=50&key=${API_KEY}`;
                 const res = await fetch(url);
                 const data = await res.json();
-                
                 const videoIds = data.items.filter(i => i.id.kind === 'youtube#video').map(i => i.id.videoId).join(',');
                 let durationMap = {};
                 if (videoIds) {
@@ -254,7 +279,6 @@
             const dData = await dRes.json();
             let durationMap = {};
             dData.items.forEach(i => { durationMap[i.id] = parseDuration(i.contentDetails.duration); });
-            
             let html = `<div class="back-link" onclick="restoreLastSearch()">ALBUM / BACK</div>`;
             html += `<div class="section-label">${title.replace(/ - Topic$/, "")}</div>`;
             html += data.items.map(i => `<div class="row" onclick="playVideo('${i.snippet.resourceId.videoId}')"><span class="type-tag">SONG</span><div class="thumb-box"><img src="${i.snippet.thumbnails.default.url}"></div><div class="title">${i.snippet.title}</div><div class="duration">${durationMap[i.snippet.resourceId.videoId] || "--:--"}</div></div>`).join('');
