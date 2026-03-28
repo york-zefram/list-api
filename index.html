@@ -23,10 +23,10 @@
         #seek-fill { position: absolute; left: 0; top: 0; height: 100%; background: rgba(0, 243, 255, 0.5); border-radius: 5px; pointer-events: none; }
         #seek-dot { position: absolute; top: 50%; width: 16px; height: 16px; background: #fff; border-radius: 50%; transform: translate(-50%, -50%); pointer-events: none; box-shadow: 0 0 10px rgba(255,255,255,0.8); }
         
-        /* 時間表示の重なり解消: バーの上（現在地）と下（総計）に分離 */
-        .time-label { position: absolute; font-family: monospace; font-size: 0.75rem; color: var(--blue); letter-spacing: 1px; pointer-events: none; width: auto; }
-        #current-time { top: 12px; left: 0; }  /* バーの上に配置 */
-        #total-time { bottom: 12px; right: 0; } /* バーの下に配置 */
+        /* 時間表示を両方ともバーの「下」に配置 */
+        .time-label { position: absolute; font-family: monospace; font-size: 0.75rem; color: var(--blue); letter-spacing: 1px; pointer-events: none; bottom: 12px; }
+        #current-time { left: 0; }
+        #total-time { right: 0; }
 
         .search-bar { padding: 5px 15px 15px 15px; background: var(--black); flex-shrink: 0; border-bottom: 1px solid #222; display: flex; gap: 8px; align-items: center; }
         #key-trigger { cursor: pointer; font-size: 1.1rem; transition: 0.3s; filter: grayscale(1); opacity: 0.4; flex-shrink: 0; }
