@@ -23,7 +23,6 @@
         #search-input { background: var(--gray); border: 1px solid #333; border-radius: 4px; font-size: 1rem; color: white; width: 100%; padding: 10px; outline: none; box-sizing: border-box; }
         #search-btn { background: transparent; color: var(--blue); border: 1px solid var(--blue); padding: 0 12px; border-radius: 4px; font-size: 0.8rem; font-weight: bold; cursor: pointer; height: 40px; line-height: 40px; flex-shrink: 0; }
 
-        /* margin-topを5pxから8pxに微調整し、重なりを解消 */
         #status { position: absolute; left: 15px; top: 100%; font-size: 0.55rem; color: #555; margin-top: 8px; letter-spacing: 1px; }
         #back-btn { display: none; color: var(--blue); font-size: 0.6rem; font-weight: bold; cursor: pointer; position: absolute; right: 0; top: 100%; margin-top: 8px; }
 
@@ -55,8 +54,8 @@
                 <div id="mode-prc" class="mode-btn active" onclick="setMode('practice')">PRC</div>
             </div>
             <div class="input-wrapper">
-                <input type="text" id="search-input" placeholder="READY" onkeydown="if(event.key==='Enter') doSearch()">
-                <div id="status">CORE READY</div>
+                <input type="text" id="search-input" placeholder="" onkeydown="if(event.key==='Enter') doSearch()">
+                <div id="status"></div>
                 <div id="back-btn" onclick="restoreLastSearch()">← BACK</div>
             </div>
             <button id="search-btn" onclick="doSearch()">GO</button>
@@ -142,7 +141,7 @@
                 }
                 renderList(data.items, durationMap);
                 lastResultsHTML = document.getElementById('lst').innerHTML;
-                document.getElementById('status').innerText = "DONE";
+                document.getElementById('status').innerText = ""; // DONEを消去
             } catch (e) { document.getElementById('status').innerText = "ERROR"; }
         }
 
@@ -177,7 +176,7 @@
             html += data.items.map(i => `<div class="row" onclick="playVideo('${i.snippet.resourceId.videoId}')"><span class="type-tag">SONG</span><div class="thumb-box"><img src="${i.snippet.thumbnails.default.url}"></div><div class="title">${i.snippet.title}</div><div class="duration">${durationMap[i.snippet.resourceId.videoId] || "--:--"}</div></div>`).join('');
             document.getElementById('lst').innerHTML = html;
             document.getElementById('back-btn').style.display = "block";
-            document.getElementById('status').innerText = "DONE";
+            document.getElementById('status').innerText = ""; // DONEを消去
         }
 
         function parseDuration(pt) {
