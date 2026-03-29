@@ -25,18 +25,23 @@
         #current-time { left: 0; }
         #total-time { right: 0; }
 
-        /* 検索エリア：モードセレクターを上の段へ */
-        .search-area { padding: 5px 15px 15px 15px; background: var(--black); flex-shrink: 0; border-bottom: 1px solid #222; display: flex; flex-direction: column; gap: 12px; position: relative; z-index: 10; }
+        /* 検索エリア：ジャンルスタックを追加 */
+        .search-area { padding: 5px 15px 15px 15px; background: var(--black); flex-shrink: 0; border-bottom: 1px solid #222; display: flex; flex-direction: column; gap: 10px; position: relative; z-index: 10; }
         
-        /* 上の段：モードセレクター */
+        /* 最上段：10ジャンルスタック（スクロール可能） */
+        .genre-stack { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 5px; -webkit-overflow-scrolling: touch; }
+        .genre-stack::-webkit-scrollbar { display: none; }
+        .genre-tag { font-size: 0.5rem; padding: 4px 8px; background: var(--gray); border: 1px solid #333; border-radius: 12px; color: #888; white-space: nowrap; cursor: pointer; }
+
+        /* 中段：MUSIC領事のみ */
         .top-row { display: flex; align-items: center; gap: 15px; }
         .mode-selector { display: flex; background: var(--gray); border-radius: 4px; padding: 2px; border: 1px solid #333; }
-        .mode-btn { font-size: 0.55rem; padding: 6px 10px; border-radius: 2px; cursor: pointer; color: #555; font-weight: bold; transition: 0.2s; }
+        .mode-btn { font-size: 0.55rem; padding: 6px 12px; border-radius: 2px; cursor: pointer; color: #555; font-weight: bold; transition: 0.2s; }
         .mode-btn.active { background: #333; color: var(--blue); }
         #key-trigger { cursor: pointer; font-size: 1.1rem; transition: 0.3s; filter: grayscale(1); opacity: 0.4; }
         #key-trigger.active { filter: grayscale(0); opacity: 1; text-shadow: 0 0 10px var(--green); }
 
-        /* 下の段：検索入力 */
+        /* 下段：検索入力 */
         .bottom-row { display: flex; gap: 8px; align-items: center; }
         .input-wrapper { flex-grow: 1; position: relative; }
         #search-input { background: var(--gray); border: 1px solid #333; border-radius: 4px; font-size: 1rem; color: white; width: 100%; padding: 10px; outline: none; box-sizing: border-box; }
@@ -78,14 +83,26 @@
         </div>
 
         <div class="search-area">
+            <div class="genre-stack">
+                <div class="genre-tag" onclick="quickSearch('Hip Hop / Rap')">Hip Hop / Rap</div>
+                <div class="genre-tag" onclick="quickSearch('Pop / Modern Pop')">Pop / Modern Pop</div>
+                <div class="genre-tag" onclick="quickSearch('R&B / Soul')">R&B / Soul</div>
+                <div class="genre-tag" onclick="quickSearch('Country')">Country</div>
+                <div class="genre-tag" onclick="quickSearch('Rock / Alternative')">Rock / Alternative</div>
+                <div class="genre-tag" onclick="quickSearch('EDM / Dance')">EDM / Dance</div>
+                <div class="genre-tag" onclick="quickSearch('Lo-fi Hip Hop / Chillhop')">Lo-fi Hip Hop / Chillhop</div>
+                <div class="genre-tag" onclick="quickSearch('Latin / Reggaeton')">Latin / Reggaeton</div>
+                <div class="genre-tag" onclick="quickSearch('K-Pop (Global)')">K-Pop (Global)</div>
+                <div class="genre-tag" onclick="quickSearch('Indie / Bedroom Pop')">Indie / Bedroom Pop</div>
+            </div>
+
             <div class="top-row">
                 <div id="key-trigger" onclick="toggleSetup()">🔑</div>
                 <div class="mode-selector">
-                    <div id="mode-mov" class="mode-btn" onclick="setMode('movie')">MOV</div>
-                    <div id="mode-msc" class="mode-btn" onclick="setMode('music')">MSC</div>
-                    <div id="mode-prc" class="mode-btn active" onclick="setMode('practice')">PRC</div>
+                    <div id="mode-msc" class="mode-btn active" onclick="setMode('music')">MUSIC</div>
                 </div>
             </div>
+
             <div class="bottom-row">
                 <div class="input-wrapper">
                     <input type="text" id="search-input" placeholder="" onkeydown="if(event.key==='Enter') doSearch()">
@@ -109,7 +126,7 @@
     <script src="https://www.youtube.com/iframe_api"></script>
     <script>
         let API_KEY = localStorage.getItem('ZEFRAM_API_KEY');
-        let currentMode = 'practice';
+        let currentMode = 'music';
         let player, lastResultsHTML = "";
         let timer, isDragging = false;
 
@@ -120,9 +137,7 @@
 
         function setMode(m) {
             currentMode = m;
-            document.getElementById('mode-mov').classList.toggle('active', m === 'movie');
             document.getElementById('mode-msc').classList.toggle('active', m === 'music');
-            document.getElementById('mode-prc').classList.toggle('active', m === 'practice');
         }
 
         function updateKeyStatus() {
@@ -235,15 +250,17 @@
             return m.toString().padStart(2, '0') + ":" + rs.toString().padStart(2, '0');
         }
 
+        function quickSearch(genre) {
+            document.getElementById('search-input').value = genre;
+            doSearch();
+        }
+
         async function doSearch() {
             if (!API_KEY) return toggleSetup();
             const q = document.getElementById('search-input').value;
             if (!q) return;
             document.getElementById('status').innerText = "SEARCHING...";
-            let suffix = "";
-            if(currentMode === 'music') suffix = " - Topic";
-            else if(currentMode === 'movie') suffix = " Official MV";
-            else if(currentMode === 'practice') suffix = " Official Dance Practice -Mirror"; 
+            let suffix = " - Topic";
             try {
                 const url = `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(q + suffix)}&maxResults=50&key=${API_KEY}`;
                 const res = await fetch(url);
