@@ -51,9 +51,9 @@
 
         .bottom-row { width: 92%; display: flex; gap: 12px; align-items: center; margin-top: 10px; }
         
-        /* 鍵アイコンのカラーロジック：デフォルトはグレー、アクティブでブルー */
-        #key-trigger { cursor: pointer; font-size: 1.2rem; transition: 0.3s; color: var(--dark-gray); filter: grayscale(1); opacity: 0.6; flex-shrink: 0; }
-        #key-trigger.active { color: var(--blue); filter: grayscale(0); opacity: 1; text-shadow: 0 0 12px var(--blue); }
+        /* 鍵アイコン：filter干渉を排除し、カラー指定を優先 */
+        #key-trigger { cursor: pointer; font-size: 1.2rem; transition: 0.3s; color: var(--dark-gray); opacity: 0.6; flex-shrink: 0; }
+        #key-trigger.active { color: var(--blue) !important; opacity: 1; text-shadow: 0 0 12px var(--blue); }
 
         .input-wrapper { flex-grow: 1; position: relative; }
         #search-input { background: var(--gray); border: 1px solid #333; border-radius: 4px; font-size: 1rem; color: white; width: 100%; padding: 10px; outline: none; box-sizing: border-box; }
@@ -146,7 +146,7 @@
         window.addEventListener('DOMContentLoaded', () => {
             updateKeyStatus();
             initSeekBar();
-            setTimeout(centerMusic, 100);
+            setTimeout(centerMusic, 150);
         });
 
         function centerMusic() {
@@ -159,8 +159,11 @@
 
         function updateKeyStatus() {
             const trigger = document.getElementById('key-trigger');
-            if (API_KEY) trigger.classList.add('active');
-            else trigger.classList.remove('active');
+            if (API_KEY && API_KEY.trim().length > 0) {
+                trigger.classList.add('active');
+            } else {
+                trigger.classList.remove('active');
+            }
         }
 
         function toggleSetup() {
@@ -173,13 +176,15 @@
         async function checkKey() {
             const val = document.getElementById('api-key-input').value.trim();
             if (val.length < 30) return;
-            const res = await fetch(`https://www.googleapis.com/youtube/v3/videoCategories?part=snippet&regionCode=JP&key=${val}`);
-            if (res.ok) {
-                localStorage.setItem('ZEFRAM_API_KEY', val);
-                API_KEY = val;
-                updateKeyStatus();
-                toggleSetup();
-            }
+            try {
+                const res = await fetch(`https://www.googleapis.com/youtube/v3/videoCategories?part=snippet&regionCode=JP&key=${val}`);
+                if (res.ok) {
+                    localStorage.setItem('ZEFRAM_API_KEY', val);
+                    API_KEY = val;
+                    updateKeyStatus();
+                    toggleSetup();
+                }
+            } catch (e) { console.error("Key verification failed"); }
         }
 
         function onYouTubeIframeAPIReady() {
@@ -260,7 +265,6 @@
 
         function toggleGenre(el) {
             const val = el.getAttribute('data-val');
-            
             if (val === 'MUSIC') {
                 selectedGenres = [];
                 document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
