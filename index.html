@@ -24,7 +24,7 @@
         #current-time { left: 0; }
         #total-time { right: 0; }
 
-        .search-area { padding: 10px 0 20px 0; background: var(--black); flex-shrink: 0; border-bottom: 1px solid #222; display: flex; flex-direction: column; align-items: center; position: relative; z-index: 10; overflow: hidden; }
+        .search-area { padding: 10px 0 10px 0; background: var(--black); flex-shrink: 0; border-bottom: 1px solid #222; display: flex; flex-direction: column; align-items: center; position: relative; z-index: 20; overflow: hidden; }
         
         .rotary-container { width: 100%; overflow-x: auto; display: flex; scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch; padding: 10px 0; scroll-behavior: smooth; }
         .rotary-container::-webkit-scrollbar { display: none; }
@@ -58,12 +58,24 @@
         #search-btn { background: transparent; color: var(--blue); border: 1px solid var(--blue); padding: 0 12px; border-radius: 4px; font-size: 0.8rem; font-weight: bold; cursor: pointer; height: 40px; line-height: 40px; flex-shrink: 0; }
         #status { position: absolute; left: 0; top: 100%; font-size: 0.55rem; color: #555; margin-top: 4px; letter-spacing: 1px; }
 
-        #lst { flex-grow: 1; overflow-y: auto; padding: 15px 15px 50px 15px; -webkit-overflow-scrolling: touch; position: relative; z-index: 5; }
-        
-        /* ナビゲーション行のスタイル */
-        .nav-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 0 20px 0; }
-        .nav-link { font-size: 0.85rem; font-weight: bold; color: var(--blue); cursor: pointer; letter-spacing: 1px; transition: 0.2s; }
+        /* 固定ナビゲーション */
+        .sticky-nav { 
+            position: sticky; 
+            top: 0; 
+            background: rgba(5, 5, 5, 0.95); 
+            z-index: 30; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            padding: 12px 20px; 
+            border-bottom: 1px solid #222;
+            backdrop-filter: blur(5px);
+        }
+        .nav-link { font-size: 0.85rem; font-weight: bold; color: var(--blue); cursor: pointer; letter-spacing: 1px; }
         .nav-link:active { opacity: 0.5; }
+
+        #lst { flex-grow: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; position: relative; z-index: 5; }
+        .list-inner { padding: 0 15px 50px 15px; }
 
         #setup-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 1000; display: none; justify-content: center; align-items: center; }
         .z-panel { width: 85%; max-width: 360px; padding: 40px 20px; border: 1px solid var(--blue); background: var(--black); text-align: center; }
@@ -105,9 +117,7 @@
                     <div class="mode-btn" data-val="Country" onclick="toggleGenre(this)">Country</div>
                     <div class="mode-btn" data-val="Jazz / Smooth Jazz" onclick="toggleGenre(this)">Jazz / Smooth Jazz</div>
                     <div class="mode-btn" data-val="Jazzy Hip Hop / Chill Out" onclick="toggleGenre(this)">Jazzy Hip Hop / Chill Out</div>
-                    
                     <div id="m-music" class="mode-btn active" data-val="MUSIC" onclick="toggleGenre(this)">MUSIC</div>
-                    
                     <div class="mode-btn" data-val="MIX" onclick="toggleGenre(this)">MIX</div>
                     <div class="mode-btn" data-val="Lo-fi Hip Hop / Chillhop" onclick="toggleGenre(this)">Lo-fi Hip Hop / Chillhop</div>
                     <div class="mode-btn" data-val="Indie / Bedroom Pop" onclick="toggleGenre(this)">Indie / Bedroom Pop</div>
@@ -127,7 +137,13 @@
             </div>
         </div>
 
-        <div id="lst"></div>
+        <div id="lst">
+            <div class="sticky-nav" id="sticky-nav" style="display:none;">
+                <div class="nav-link" onclick="restoreLastSearch()">ALBUM / BACK</div>
+                <div class="nav-link" onclick="doSearch(true)">↻ REFRESH</div>
+            </div>
+            <div class="list-inner" id="list-inner"></div>
+        </div>
     </div>
 
     <div id="setup-overlay">
@@ -192,10 +208,7 @@
             player = new YT.Player('player', {
                 height: '100%', width: '100%', videoId: '',
                 playerVars: { 'playsinline': 1, 'controls': 0, 'rel': 0, 'modestbranding': 1, 'showinfo': 0, 'iv_load_policy': 3, 'disablekb': 1 },
-                events: { 
-                    'onReady': () => console.log("Player Ready"),
-                    'onStateChange': onPlayerStateChange 
-                }
+                events: { 'onStateChange': onPlayerStateChange }
             });
         }
 
@@ -314,21 +327,17 @@
                     const dData = await dRes.json();
                     dData.items.forEach(i => { durationMap[i.id] = parseDuration(i.contentDetails.duration); });
                 }
-                renderList(data.items, durationMap, isNext);
-                lastResultsHTML = document.getElementById('lst').innerHTML;
+                renderList(data.items, durationMap);
                 document.getElementById('status').innerText = "";
             } catch (e) { document.getElementById('status').innerText = "ERROR"; }
         }
 
-        function renderList(items, durationMap, isNext) {
-            const lst = document.getElementById('lst');
+        function renderList(items, durationMap) {
+            const container = document.getElementById('list-inner');
+            const nav = document.getElementById('sticky-nav');
             let html = "";
             
-            // ナビゲーション行
-            html += `<div class="nav-row">
-                        <div class="nav-link" onclick="restoreLastSearch()">ALBUM / BACK</div>
-                        <div class="nav-link" onclick="doSearch(true)">↻ REFRESH</div>
-                     </div>`;
+            nav.style.display = 'flex'; // リスト表示時にナビを出す
 
             const playlists = items.filter(i => i.id.kind === 'youtube#playlist');
             if (playlists.length > 0) {
@@ -340,8 +349,9 @@
                 html += '<div class="section-label">VIDEOS</div>';
                 html += videos.map(i => `<div class="row" onclick="playVideo('${i.id.videoId}')"><span class="type-tag">SONG</span><div class="thumb-box"><img src="${i.snippet.thumbnails.default.url}"></div><div class="title">${i.snippet.title.replace(/ - Topic$/, "")}</div><div class="duration">${durationMap[i.id.videoId] || "--:--"}</div></div>`).join('');
             }
-            lst.innerHTML = html;
-            lst.scrollTop = 0;
+            container.innerHTML = html;
+            lastResultsHTML = html;
+            document.getElementById('lst').scrollTop = 0;
         }
 
         async function loadAlbum(playlistId, title) {
@@ -355,14 +365,12 @@
             let durationMap = {};
             dData.items.forEach(i => { durationMap[i.id] = parseDuration(i.contentDetails.duration); });
             
-            let html = `<div class="nav-row">
-                            <div class="nav-link" onclick="restoreLastSearch()">ALBUM / BACK</div>
-                            <div></div>
-                        </div>`;
-            html += `<div class="section-label">${title.replace(/ - Topic$/, "")}</div>`;
+            let html = `<div class="section-label">${title.replace(/ - Topic$/, "")}</div>`;
             html += data.items.map(i => `<div class="row" onclick="playVideo('${i.snippet.resourceId.videoId}')"><span class="type-tag">SONG</span><div class="thumb-box"><img src="${i.snippet.thumbnails.default.url}"></div><div class="title">${i.snippet.title}</div><div class="duration">${durationMap[i.snippet.resourceId.videoId] || "--:--"}</div></div>`).join('');
-            document.getElementById('lst').innerHTML = html;
+            
+            document.getElementById('list-inner').innerHTML = html;
             document.getElementById('status').innerText = "";
+            document.getElementById('lst').scrollTop = 0;
         }
 
         function parseDuration(pt) {
@@ -376,7 +384,12 @@
             return res.join(':');
         }
 
-        function restoreLastSearch() { if(lastResultsHTML) document.getElementById('lst').innerHTML = lastResultsHTML; }
+        function restoreLastSearch() { 
+            if(lastResultsHTML) {
+                document.getElementById('list-inner').innerHTML = lastResultsHTML;
+                document.getElementById('lst').scrollTop = 0;
+            }
+        }
         function playVideo(id) { if (player && player.loadVideoById) { player.loadVideoById({ videoId: id }); document.getElementById('search-input').blur(); } }
     </script>
 </body>
