@@ -25,23 +25,21 @@
         #current-time { left: 0; }
         #total-time { right: 0; }
 
-        /* 検索エリア：ジャンルスタックを追加 */
-        .search-area { padding: 5px 15px 15px 15px; background: var(--black); flex-shrink: 0; border-bottom: 1px solid #222; display: flex; flex-direction: column; gap: 10px; position: relative; z-index: 10; }
+        /* 検索エリア：フラットな横並び構成 */
+        .search-area { padding: 5px 15px 15px 15px; background: var(--black); flex-shrink: 0; border-bottom: 1px solid #222; display: flex; flex-direction: column; gap: 12px; position: relative; z-index: 10; }
         
-        /* 最上段：10ジャンルスタック（スクロール可能） */
-        .genre-stack { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 5px; -webkit-overflow-scrolling: touch; }
-        .genre-stack::-webkit-scrollbar { display: none; }
-        .genre-tag { font-size: 0.5rem; padding: 4px 8px; background: var(--gray); border: 1px solid #333; border-radius: 12px; color: #888; white-space: nowrap; cursor: pointer; }
-
-        /* 中段：MUSIC領事のみ */
-        .top-row { display: flex; align-items: center; gap: 15px; }
-        .mode-selector { display: flex; background: var(--gray); border-radius: 4px; padding: 2px; border: 1px solid #333; }
-        .mode-btn { font-size: 0.55rem; padding: 6px 12px; border-radius: 2px; cursor: pointer; color: #555; font-weight: bold; transition: 0.2s; }
-        .mode-btn.active { background: #333; color: var(--blue); }
-        #key-trigger { cursor: pointer; font-size: 1.1rem; transition: 0.3s; filter: grayscale(1); opacity: 0.4; }
+        /* 上の段：MUSIC領事とジャンルを横一列に配置（スクロール可能） */
+        .top-row { display: flex; align-items: center; gap: 12px; overflow-x: auto; -webkit-overflow-scrolling: touch; padding-bottom: 4px; }
+        .top-row::-webkit-scrollbar { display: none; }
+        
+        #key-trigger { cursor: pointer; font-size: 1.1rem; transition: 0.3s; filter: grayscale(1); opacity: 0.4; flex-shrink: 0; }
         #key-trigger.active { filter: grayscale(0); opacity: 1; text-shadow: 0 0 10px var(--green); }
 
-        /* 下段：検索入力 */
+        .mode-selector { display: flex; background: var(--gray); border-radius: 4px; padding: 2px; border: 1px solid #333; flex-shrink: 0; }
+        .mode-btn { font-size: 0.55rem; padding: 6px 12px; border-radius: 2px; cursor: pointer; color: #555; font-weight: bold; transition: 0.2s; white-space: nowrap; }
+        .mode-btn.active { background: #333; color: var(--blue); }
+
+        /* 下の段：検索入力 */
         .bottom-row { display: flex; gap: 8px; align-items: center; }
         .input-wrapper { flex-grow: 1; position: relative; }
         #search-input { background: var(--gray); border: 1px solid #333; border-radius: 4px; font-size: 1rem; color: white; width: 100%; padding: 10px; outline: none; box-sizing: border-box; }
@@ -83,23 +81,20 @@
         </div>
 
         <div class="search-area">
-            <div class="genre-stack">
-                <div class="genre-tag" onclick="quickSearch('Hip Hop / Rap')">Hip Hop / Rap</div>
-                <div class="genre-tag" onclick="quickSearch('Pop / Modern Pop')">Pop / Modern Pop</div>
-                <div class="genre-tag" onclick="quickSearch('R&B / Soul')">R&B / Soul</div>
-                <div class="genre-tag" onclick="quickSearch('Country')">Country</div>
-                <div class="genre-tag" onclick="quickSearch('Rock / Alternative')">Rock / Alternative</div>
-                <div class="genre-tag" onclick="quickSearch('EDM / Dance')">EDM / Dance</div>
-                <div class="genre-tag" onclick="quickSearch('Lo-fi Hip Hop / Chillhop')">Lo-fi Hip Hop / Chillhop</div>
-                <div class="genre-tag" onclick="quickSearch('Latin / Reggaeton')">Latin / Reggaeton</div>
-                <div class="genre-tag" onclick="quickSearch('K-Pop (Global)')">K-Pop (Global)</div>
-                <div class="genre-tag" onclick="quickSearch('Indie / Bedroom Pop')">Indie / Bedroom Pop</div>
-            </div>
-
             <div class="top-row">
                 <div id="key-trigger" onclick="toggleSetup()">🔑</div>
                 <div class="mode-selector">
                     <div id="mode-msc" class="mode-btn active" onclick="setMode('music')">MUSIC</div>
+                    <div class="mode-btn" onclick="quickSearch('Hip Hop / Rap')">Hip Hop / Rap</div>
+                    <div class="mode-btn" onclick="quickSearch('Pop / Modern Pop')">Pop / Modern Pop</div>
+                    <div class="mode-btn" onclick="quickSearch('R&B / Soul')">R&B / Soul</div>
+                    <div class="mode-btn" onclick="quickSearch('Country')">Country</div>
+                    <div class="mode-btn" onclick="quickSearch('Rock / Alternative')">Rock / Alternative</div>
+                    <div class="mode-btn" onclick="quickSearch('EDM / Dance')">EDM / Dance</div>
+                    <div class="mode-btn" onclick="quickSearch('Lo-fi Hip Hop / Chillhop')">Lo-fi Hip Hop / Chillhop</div>
+                    <div class="mode-btn" onclick="quickSearch('Latin / Reggaeton')">Latin / Reggaeton</div>
+                    <div class="mode-btn" onclick="quickSearch('K-Pop (Global)')">K-Pop (Global)</div>
+                    <div class="mode-btn" onclick="quickSearch('Indie / Bedroom Pop')">Indie / Bedroom Pop</div>
                 </div>
             </div>
 
