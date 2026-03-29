@@ -24,15 +24,11 @@
         #current-time { left: 0; }
         #total-time { right: 0; }
 
-        /* 検索エリア：円形ロータリーUI */
         .search-area { padding: 10px 0 20px 0; background: var(--black); flex-shrink: 0; border-bottom: 1px solid #222; display: flex; flex-direction: column; align-items: center; position: relative; z-index: 10; overflow: hidden; }
         
-        /* 無限ループ・ロータリー構造 */
-        .rotary-container { width: 100%; overflow-x: auto; display: flex; scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch; padding: 10px 0; }
+        .rotary-container { width: 100%; overflow-x: auto; display: flex; scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch; padding: 10px 0; scroll-behavior: smooth; }
         .rotary-container::-webkit-scrollbar { display: none; }
-        
-        /* 前後にバッファを持たせて無限感を演出 */
-        .rotary-track { display: flex; align-items: center; padding: 0 50%; } /* 中央開始のためのパディング */
+        .rotary-track { display: flex; align-items: center; padding: 0 50%; }
 
         .mode-btn { 
             scroll-snap-align: center;
@@ -51,11 +47,9 @@
         }
         .mode-btn.active { color: var(--blue); border-color: var(--blue); background: #111; text-shadow: 0 0 8px var(--blue); transform: scale(1.1); }
 
-        /* 固定キー（鍵アイコン） */
         #key-trigger { position: absolute; left: 15px; top: 50%; transform: translateY(-50%); cursor: pointer; font-size: 1.1rem; transition: 0.3s; filter: grayscale(1); opacity: 0.4; z-index: 20; }
         #key-trigger.active { filter: grayscale(0); opacity: 1; text-shadow: 0 0 10px var(--green); }
 
-        /* 下の段：検索入力 */
         .bottom-row { width: 92%; display: flex; gap: 8px; align-items: center; margin-top: 10px; }
         .input-wrapper { flex-grow: 1; position: relative; }
         #search-input { background: var(--gray); border: 1px solid #333; border-radius: 4px; font-size: 1rem; color: white; width: 100%; padding: 10px; outline: none; box-sizing: border-box; }
@@ -98,20 +92,23 @@
 
         <div class="search-area">
             <div id="key-trigger" onclick="toggleSetup()">🔑</div>
-            
             <div class="rotary-container" id="rotary">
                 <div class="rotary-track" id="track">
-                    <div id="m-music" class="mode-btn active" onclick="quickSearch('MUSIC', this)">MUSIC</div>
-                    <div class="mode-btn" onclick="quickSearch('Indie / Bedroom Pop', this)">Indie / Bedroom Pop</div>
-                    <div class="mode-btn" onclick="quickSearch('K-Pop (Global)', this)">K-Pop (Global)</div>
-                    <div class="mode-btn" onclick="quickSearch('Latin / Reggaeton', this)">Latin / Reggaeton</div>
-                    <div class="mode-btn" onclick="quickSearch('Lo-fi Hip Hop / Chillhop', this)">Lo-fi Hip Hop / Chillhop</div>
-                    <div class="mode-btn" onclick="quickSearch('EDM / Dance', this)">EDM / Dance</div>
-                    <div class="mode-btn" onclick="quickSearch('Rock / Alternative', this)">Rock / Alternative</div>
-                    <div class="mode-btn" onclick="quickSearch('Country', this)">Country</div>
-                    <div class="mode-btn" onclick="quickSearch('R&B / Soul', this)">R&B / Soul</div>
-                    <div class="mode-btn" onclick="quickSearch('Pop / Modern Pop', this)">Pop / Modern Pop</div>
-                    <div class="mode-btn" onclick="quickSearch('Hip Hop / Rap', this)">Hip Hop / Rap</div>
+                    <div class="mode-btn" data-val="Latin / Reggaeton" onclick="toggleGenre(this)">Latin / Reggaeton</div>
+                    <div class="mode-btn" data-val="EDM / Dance" onclick="toggleGenre(this)">EDM / Dance</div>
+                    <div class="mode-btn" data-val="Rock / Alternative" onclick="toggleGenre(this)">Rock / Alternative</div>
+                    <div class="mode-btn" data-val="Country" onclick="toggleGenre(this)">Country</div>
+                    <div class="mode-btn" data-val="Jazz / Smooth Jazz" onclick="toggleGenre(this)">Jazz / Smooth Jazz</div>
+                    <div class="mode-btn" data-val="Jazzy Hip Hop / Chill Out" onclick="toggleGenre(this)">Jazzy Hip Hop / Chill Out</div>
+                    <div class="mode-btn" data-val="Lo-fi Hip Hop / Chillhop" onclick="toggleGenre(this)">Lo-fi Hip Hop / Chillhop</div>
+                    
+                    <div id="m-music" class="mode-btn active" data-val="MUSIC" onclick="toggleGenre(this)">MUSIC</div>
+                    
+                    <div class="mode-btn" data-val="MIX" onclick="toggleGenre(this)">MIX</div>
+                    <div class="mode-btn" data-val="Indie / Bedroom Pop" onclick="toggleGenre(this)">Indie / Bedroom Pop</div>
+                    <div class="mode-btn" data-val="Hip Hop / Rap" onclick="toggleGenre(this)">Hip Hop / Rap</div>
+                    <div class="mode-btn" data-val="Pop / Modern Pop" onclick="toggleGenre(this)">Pop / Modern Pop</div>
+                    <div class="mode-btn" data-val="R&B / Soul" onclick="toggleGenre(this)">R&B / Soul</div>
                 </div>
             </div>
 
@@ -140,11 +137,11 @@
         let API_KEY = localStorage.getItem('ZEFRAM_API_KEY');
         let player, lastResultsHTML = "";
         let timer, isDragging = false;
+        let selectedGenres = [];
 
         window.addEventListener('DOMContentLoaded', () => {
             updateKeyStatus();
             initSeekBar();
-            // 初期位置をMUSICに
             const rotary = document.getElementById('rotary');
             const musicBtn = document.getElementById('m-music');
             rotary.scrollLeft = musicBtn.offsetLeft - (rotary.offsetWidth / 2) + (musicBtn.offsetWidth / 2);
@@ -250,29 +247,38 @@
             return m.toString().padStart(2, '0') + ":" + rs.toString().padStart(2, '0');
         }
 
-        function quickSearch(val, el) {
-            document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
-            el.classList.add('active');
-            
-            // 中央へスクロール
+        function toggleGenre(el) {
+            const val = el.getAttribute('data-val');
             const rotary = document.getElementById('rotary');
+            
+            if (val === 'MUSIC') {
+                selectedGenres = [];
+                document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+                el.classList.add('active');
+            } else {
+                document.getElementById('m-music').classList.remove('active');
+                if (el.classList.contains('active')) {
+                    el.classList.remove('active');
+                    selectedGenres = selectedGenres.filter(g => g !== val);
+                } else {
+                    el.classList.add('active');
+                    selectedGenres.push(val);
+                }
+                if (selectedGenres.length === 0) document.getElementById('m-music').classList.add('active');
+            }
+
             rotary.scrollTo({
                 left: el.offsetLeft - (rotary.offsetWidth / 2) + (el.offsetWidth / 2),
                 behavior: 'smooth'
             });
 
-            if (val === 'MUSIC') {
-                document.getElementById('search-input').value = "";
-            } else {
-                document.getElementById('search-input').value = val;
-                doSearch();
-            }
+            document.getElementById('search-input').value = selectedGenres.join(' ');
         }
 
         async function doSearch() {
             if (!API_KEY) return toggleSetup();
             const q = document.getElementById('search-input').value;
-            if (!q) return;
+            if (!q && selectedGenres.length === 0) return;
             document.getElementById('status').innerText = "SEARCHING...";
             try {
                 const url = `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(q + " - Topic")}&maxResults=50&key=${API_KEY}`;
