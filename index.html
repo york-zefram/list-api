@@ -30,11 +30,13 @@
         .rotary-container::-webkit-scrollbar { display: none; }
         .rotary-track { display: flex; align-items: center; padding: 0 50%; }
 
+        /* 全てのボタンを一番長いジャンル（Jazzy Hip Hop / Chill Out）の幅に統一 */
         .mode-btn { 
             scroll-snap-align: center;
             flex-shrink: 0;
+            width: 180px;
             font-size: 0.6rem;
-            padding: 8px 20px;
+            padding: 8px 0;
             margin: 0 10px;
             background: var(--gray);
             border: 1px solid #333;
@@ -44,15 +46,18 @@
             transition: 0.3s;
             white-space: nowrap;
             cursor: pointer;
+            text-align: center;
         }
         .mode-btn.active { color: var(--blue); border-color: var(--blue); background: #111; text-shadow: 0 0 8px var(--blue); transform: scale(1.1); }
 
-        #key-trigger { position: absolute; left: 15px; top: 50%; transform: translateY(-50%); cursor: pointer; font-size: 1.1rem; transition: 0.3s; filter: grayscale(1); opacity: 0.4; z-index: 20; }
-        #key-trigger.active { filter: grayscale(0); opacity: 1; text-shadow: 0 0 10px var(--green); }
-
         .bottom-row { width: 92%; display: flex; gap: 8px; align-items: center; margin-top: 10px; }
-        .input-wrapper { flex-grow: 1; position: relative; }
-        #search-input { background: var(--gray); border: 1px solid #333; border-radius: 4px; font-size: 1rem; color: white; width: 100%; padding: 10px; outline: none; box-sizing: border-box; }
+        .input-wrapper { flex-grow: 1; position: relative; display: flex; align-items: center; background: var(--gray); border: 1px solid #333; border-radius: 4px; padding: 0 10px; }
+        
+        /* 鍵アイコンを検索窓の中に配置 */
+        #key-trigger { cursor: pointer; font-size: 1rem; transition: 0.3s; filter: grayscale(1); opacity: 0.4; margin-right: 8px; flex-shrink: 0; }
+        #key-trigger.active { filter: grayscale(0); opacity: 1; text-shadow: 0 0 10px var(--green); }
+        
+        #search-input { background: transparent; border: none; font-size: 1rem; color: white; width: 100%; padding: 10px 0; outline: none; box-sizing: border-box; }
         #search-btn { background: transparent; color: var(--blue); border: 1px solid var(--blue); padding: 0 12px; border-radius: 4px; font-size: 0.8rem; font-weight: bold; cursor: pointer; height: 40px; line-height: 40px; flex-shrink: 0; }
         #status { position: absolute; left: 0; top: 100%; font-size: 0.55rem; color: #555; margin-top: 4px; letter-spacing: 1px; }
 
@@ -91,7 +96,6 @@
         </div>
 
         <div class="search-area">
-            <div id="key-trigger" onclick="toggleSetup()">🔑</div>
             <div class="rotary-container" id="rotary">
                 <div class="rotary-track" id="track">
                     <div class="mode-btn" data-val="Latin / Reggaeton" onclick="toggleGenre(this)">Latin / Reggaeton</div>
@@ -100,11 +104,11 @@
                     <div class="mode-btn" data-val="Country" onclick="toggleGenre(this)">Country</div>
                     <div class="mode-btn" data-val="Jazz / Smooth Jazz" onclick="toggleGenre(this)">Jazz / Smooth Jazz</div>
                     <div class="mode-btn" data-val="Jazzy Hip Hop / Chill Out" onclick="toggleGenre(this)">Jazzy Hip Hop / Chill Out</div>
-                    <div class="mode-btn" data-val="Lo-fi Hip Hop / Chillhop" onclick="toggleGenre(this)">Lo-fi Hip Hop / Chillhop</div>
                     
                     <div id="m-music" class="mode-btn active" data-val="MUSIC" onclick="toggleGenre(this)">MUSIC</div>
                     
                     <div class="mode-btn" data-val="MIX" onclick="toggleGenre(this)">MIX</div>
+                    <div class="mode-btn" data-val="Lo-fi Hip Hop / Chillhop" onclick="toggleGenre(this)">Lo-fi Hip Hop / Chillhop</div>
                     <div class="mode-btn" data-val="Indie / Bedroom Pop" onclick="toggleGenre(this)">Indie / Bedroom Pop</div>
                     <div class="mode-btn" data-val="Hip Hop / Rap" onclick="toggleGenre(this)">Hip Hop / Rap</div>
                     <div class="mode-btn" data-val="Pop / Modern Pop" onclick="toggleGenre(this)">Pop / Modern Pop</div>
@@ -114,6 +118,7 @@
 
             <div class="bottom-row">
                 <div class="input-wrapper">
+                    <div id="key-trigger" onclick="toggleSetup()">🔑</div>
                     <input type="text" id="search-input" placeholder="" onkeydown="if(event.key==='Enter') doSearch()">
                     <div id="status"></div>
                 </div>
@@ -264,7 +269,9 @@
                     el.classList.add('active');
                     selectedGenres.push(val);
                 }
-                if (selectedGenres.length === 0) document.getElementById('m-music').classList.add('active');
+                if (selectedGenres.length === 0) {
+                    document.getElementById('m-music').classList.add('active');
+                }
             }
 
             rotary.scrollTo({
@@ -281,7 +288,7 @@
             if (!q && selectedGenres.length === 0) return;
             document.getElementById('status').innerText = "SEARCHING...";
             try {
-                const url = `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(q + " - Topic")}&maxResults=50&key=${API_KEY}`;
+                const url = `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(q + \" - Topic\")}&maxResults=50&key=${API_KEY}`;
                 const res = await fetch(url);
                 const data = await res.json();
                 const videoIds = data.items.filter(i => i.id.kind === 'youtube#video').map(i => i.id.videoId).join(',');
@@ -294,7 +301,7 @@
                 renderList(data.items, durationMap);
                 lastResultsHTML = document.getElementById('lst').innerHTML;
                 document.getElementById('status').innerText = "";
-            } catch (e) { document.getElementById('status').innerText = "ERROR"; }
+            } catch (e) { document.getElementById('status').innerText = \"ERROR\"; }
         }
 
         function renderList(items, durationMap) {
@@ -332,7 +339,7 @@
         }
 
         function parseDuration(pt) {
-            const m = pt.match(/PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/);
+            const m = pt.match(/PT(?:(\\d+)H)?(?:(\\d+)M)?(?:(\\d+)S)?/);
             if (!m) return "--:--";
             const h = m[1] ? parseInt(m[1]) : 0, min = m[2] ? parseInt(m[2]) : 0, sec = m[3] ? parseInt(m[3]) : 0;
             const res = [];
