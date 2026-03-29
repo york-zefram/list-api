@@ -30,7 +30,6 @@
         .rotary-container::-webkit-scrollbar { display: none; }
         .rotary-track { display: flex; align-items: center; padding: 0 50%; }
 
-        /* 全てのボタンを一番長いジャンル（Jazzy Hip Hop / Chill Out）の幅に統一 */
         .mode-btn { 
             scroll-snap-align: center;
             flex-shrink: 0;
@@ -50,14 +49,14 @@
         }
         .mode-btn.active { color: var(--blue); border-color: var(--blue); background: #111; text-shadow: 0 0 8px var(--blue); transform: scale(1.1); }
 
-        .bottom-row { width: 92%; display: flex; gap: 8px; align-items: center; margin-top: 10px; }
-        .input-wrapper { flex-grow: 1; position: relative; display: flex; align-items: center; background: var(--gray); border: 1px solid #333; border-radius: 4px; padding: 0 10px; }
+        .bottom-row { width: 92%; display: flex; gap: 12px; align-items: center; margin-top: 10px; }
         
-        /* 鍵アイコンを検索窓の中に配置 */
-        #key-trigger { cursor: pointer; font-size: 1rem; transition: 0.3s; filter: grayscale(1); opacity: 0.4; margin-right: 8px; flex-shrink: 0; }
+        /* 鍵アイコンを枠外左に配置 */
+        #key-trigger { cursor: pointer; font-size: 1.2rem; transition: 0.3s; filter: grayscale(1); opacity: 0.4; flex-shrink: 0; }
         #key-trigger.active { filter: grayscale(0); opacity: 1; text-shadow: 0 0 10px var(--green); }
-        
-        #search-input { background: transparent; border: none; font-size: 1rem; color: white; width: 100%; padding: 10px 0; outline: none; box-sizing: border-box; }
+
+        .input-wrapper { flex-grow: 1; position: relative; }
+        #search-input { background: var(--gray); border: 1px solid #333; border-radius: 4px; font-size: 1rem; color: white; width: 100%; padding: 10px; outline: none; box-sizing: border-box; }
         #search-btn { background: transparent; color: var(--blue); border: 1px solid var(--blue); padding: 0 12px; border-radius: 4px; font-size: 0.8rem; font-weight: bold; cursor: pointer; height: 40px; line-height: 40px; flex-shrink: 0; }
         #status { position: absolute; left: 0; top: 100%; font-size: 0.55rem; color: #555; margin-top: 4px; letter-spacing: 1px; }
 
@@ -117,8 +116,8 @@
             </div>
 
             <div class="bottom-row">
+                <div id="key-trigger" onclick="toggleSetup()">🔑</div>
                 <div class="input-wrapper">
-                    <div id="key-trigger" onclick="toggleSetup()">🔑</div>
                     <input type="text" id="search-input" placeholder="" onkeydown="if(event.key==='Enter') doSearch()">
                     <div id="status"></div>
                 </div>
@@ -147,10 +146,15 @@
         window.addEventListener('DOMContentLoaded', () => {
             updateKeyStatus();
             initSeekBar();
+            centerMusic();
+        });
+
+        // デフォルトでMUSICを真ん中に配置
+        function centerMusic() {
             const rotary = document.getElementById('rotary');
             const musicBtn = document.getElementById('m-music');
             rotary.scrollLeft = musicBtn.offsetLeft - (rotary.offsetWidth / 2) + (musicBtn.offsetWidth / 2);
-        });
+        }
 
         function updateKeyStatus() {
             const trigger = document.getElementById('key-trigger');
@@ -254,7 +258,6 @@
 
         function toggleGenre(el) {
             const val = el.getAttribute('data-val');
-            const rotary = document.getElementById('rotary');
             
             if (val === 'MUSIC') {
                 selectedGenres = [];
@@ -274,11 +277,6 @@
                 }
             }
 
-            rotary.scrollTo({
-                left: el.offsetLeft - (rotary.offsetWidth / 2) + (el.offsetWidth / 2),
-                behavior: 'smooth'
-            });
-
             document.getElementById('search-input').value = selectedGenres.join(' ');
         }
 
@@ -288,7 +286,7 @@
             if (!q && selectedGenres.length === 0) return;
             document.getElementById('status').innerText = "SEARCHING...";
             try {
-                const url = `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(q + \" - Topic\")}&maxResults=50&key=${API_KEY}`;
+                const url = `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(q + " - Topic")}&maxResults=50&key=${API_KEY}`;
                 const res = await fetch(url);
                 const data = await res.json();
                 const videoIds = data.items.filter(i => i.id.kind === 'youtube#video').map(i => i.id.videoId).join(',');
@@ -301,7 +299,7 @@
                 renderList(data.items, durationMap);
                 lastResultsHTML = document.getElementById('lst').innerHTML;
                 document.getElementById('status').innerText = "";
-            } catch (e) { document.getElementById('status').innerText = \"ERROR\"; }
+            } catch (e) { document.getElementById('status').innerText = "ERROR"; }
         }
 
         function renderList(items, durationMap) {
@@ -339,7 +337,7 @@
         }
 
         function parseDuration(pt) {
-            const m = pt.match(/PT(?:(\\d+)H)?(?:(\\d+)M)?(?:(\\d+)S)?/);
+            const m = pt.match(/PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/);
             if (!m) return "--:--";
             const h = m[1] ? parseInt(m[1]) : 0, min = m[2] ? parseInt(m[2]) : 0, sec = m[3] ? parseInt(m[3]) : 0;
             const res = [];
