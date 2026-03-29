@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>ZEFRAM LST</title>
     <style>
-        :root { --blue: #00f3ff; --black: #050505; --gray: #1a1a1a; --green: #00ff88; }
+        :root { --blue: #00f3ff; --black: #050505; --gray: #1a1a1a; --dark-gray: #555; }
         html, body { height: 100%; margin: 0; background: var(--black); color: white; font-family: sans-serif; overflow: hidden; }
         .main-container { display: flex; flex-direction: column; height: 100vh; position: relative; }
         
@@ -51,9 +51,9 @@
 
         .bottom-row { width: 92%; display: flex; gap: 12px; align-items: center; margin-top: 10px; }
         
-        /* 鍵アイコンを枠外左に配置 */
-        #key-trigger { cursor: pointer; font-size: 1.2rem; transition: 0.3s; filter: grayscale(1); opacity: 0.4; flex-shrink: 0; }
-        #key-trigger.active { filter: grayscale(0); opacity: 1; text-shadow: 0 0 10px var(--green); }
+        /* 鍵アイコンのカラーロジック：デフォルトはグレー、アクティブでブルー */
+        #key-trigger { cursor: pointer; font-size: 1.2rem; transition: 0.3s; color: var(--dark-gray); filter: grayscale(1); opacity: 0.6; flex-shrink: 0; }
+        #key-trigger.active { color: var(--blue); filter: grayscale(0); opacity: 1; text-shadow: 0 0 12px var(--blue); }
 
         .input-wrapper { flex-grow: 1; position: relative; }
         #search-input { background: var(--gray); border: 1px solid #333; border-radius: 4px; font-size: 1rem; color: white; width: 100%; padding: 10px; outline: none; box-sizing: border-box; }
@@ -66,7 +66,7 @@
         #setup-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 1000; display: none; justify-content: center; align-items: center; }
         .z-panel { width: 85%; max-width: 360px; padding: 40px 20px; border: 1px solid var(--blue); background: var(--black); text-align: center; }
         .z-btn { background: transparent; color: var(--blue); border: 1px solid var(--blue); padding: 15px; width: 100%; font-weight: bold; cursor: pointer; font-size: 0.75rem; margin-bottom: 20px; }
-        .setup-input { width: 100%; padding: 12px; background: #000; border: 1px solid #333; color: var(--green); font-family: monospace; text-align: center; outline: none; box-sizing: border-box; }
+        .setup-input { width: 100%; padding: 12px; background: #000; border: 1px solid #333; color: var(--blue); font-family: monospace; text-align: center; outline: none; box-sizing: border-box; }
 
         .section-label { font-size: 0.65rem; color: var(--blue); font-weight: bold; margin: 15px 0 10px; border-left: 2px solid var(--blue); padding-left: 8px; letter-spacing: 2px; }
         .row { display: flex; align-items: center; padding: 10px 0; border-bottom: 1px solid #111; cursor: pointer; }
@@ -146,19 +146,21 @@
         window.addEventListener('DOMContentLoaded', () => {
             updateKeyStatus();
             initSeekBar();
-            centerMusic();
+            setTimeout(centerMusic, 100);
         });
 
-        // デフォルトでMUSICを真ん中に配置
         function centerMusic() {
             const rotary = document.getElementById('rotary');
             const musicBtn = document.getElementById('m-music');
-            rotary.scrollLeft = musicBtn.offsetLeft - (rotary.offsetWidth / 2) + (musicBtn.offsetWidth / 2);
+            if (rotary && musicBtn) {
+                rotary.scrollLeft = musicBtn.offsetLeft - (rotary.offsetWidth / 2) + (musicBtn.offsetWidth / 2);
+            }
         }
 
         function updateKeyStatus() {
             const trigger = document.getElementById('key-trigger');
             if (API_KEY) trigger.classList.add('active');
+            else trigger.classList.remove('active');
         }
 
         function toggleSetup() {
@@ -276,7 +278,6 @@
                     document.getElementById('m-music').classList.add('active');
                 }
             }
-
             document.getElementById('search-input').value = selectedGenres.join(' ');
         }
 
